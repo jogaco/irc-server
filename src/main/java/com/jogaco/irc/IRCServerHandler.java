@@ -12,10 +12,8 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        // Discard the received data silently.
-         ByteBuf in = (ByteBuf) msg;
-        System.out.println(in.toString(io.netty.util.CharsetUtil.US_ASCII));
-        ((ByteBuf) msg).release();
+        ctx.write(msg);
+        ctx.flush();
     }
 
     @Override
