@@ -35,9 +35,13 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
             response = "Unknown Command Error:" + ex.getCommand();
             
         } catch (LoginRequiredError ex) {
-            response = "Please log in with /login user passwd";
+            response = PLEASE_LOG_IN;
         } catch (ErrorInCommandException ex) {
             response = ex.getMessage();
+        } catch (ChannelMaxUsersException ex) {
+            response = "Too many users";
+        } catch (IRCException ex) {
+            Logger.getLogger(IRCServerHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (response != null) {
             ctx.write(Unpooled.copiedBuffer(response.getBytes()));
@@ -46,6 +50,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         }
         ((ByteBuf) msg).release();
     }
+    static final String PLEASE_LOG_IN = "Please log in with /login user passwd";
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

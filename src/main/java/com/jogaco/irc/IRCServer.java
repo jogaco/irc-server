@@ -9,6 +9,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /*
 /login name password — if user not exists create profile else login
@@ -23,13 +28,29 @@ public class IRCServer implements ServerContext {
     
     private int port;
     private final CommandDecoder commandDecoder;
+    private final Map<String, Chat> chats;
+
+    @Override
+    public Chat getOrCreateChat(String name) {
+        Chat theChat = null;
+        synchronized (chats) {
+            theChat = chats.get(name);
+            if (theChat == null) {
+                theChat = new Chat(name);
+                chats.put(name, theChat);
+            }
+        }
+        return theChat;
+    }
     
     class CommandDecoder {
         
         Command createCommand(String command) {
             if (command != null) {
-                if (command.startsWith("/login ")) {
+                if (command.startsWith("/login ") || command.equals("/login")) {
                     return new LoginCommand();
+                } else if (command.startsWith("/join ") || command.equals("/join")) {
+                    return new ChannelCommand();
                 }
             }
             return null;
@@ -38,11 +59,13 @@ public class IRCServer implements ServerContext {
     
     interface Command {
         
-        void run(ClientContext clientContext, ServerContext serverContext, String command) throws ErrorInCommandException;
+        void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException;
     }
     
     class LoginCommand implements Command {
+        
         static final String MISSING_PARAMS = "Error: /login user passwd";
+        static final String SUCCESS = "Welcome";
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws ErrorInCommandException {
@@ -50,16 +73,73 @@ public class IRCServer implements ServerContext {
             if (params.length == 3) {
                 User user = new User(params[1], params[2]);
                 clientContext.setUser(user);
-                clientContext.setOutput("Welcome");
+                clientContext.setOutput(SUCCESS);
             } else {
                 throw new ErrorInCommandException(MISSING_PARAMS);
             }
         }
     }
     
+    class ChannelCommand implements Command {
+        static final String MISSING_PARAMS = "Error: /channel channel_name";
+
+        @Override
+        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
+            if (clientContext.getUser() == null) {
+                throw new LoginRequiredError();
+            }
+            String[] params = command.split(" ");
+            if (params.length == 2) {
+                Chat chat = serverContext.getOrCreateChat(params[1]);
+                chat.join(clientContext.getUser());
+                final List<UserMessage> messages = chat.getMessages();
+                StringBuilder builder = new StringBuilder();
+                for (UserMessage usrMsg : messages) {
+                    builder.append(usrMsg.getUser());
+                    builder.append(": ");
+                    builder.append(usrMsg.getMessage());
+                    builder.append("\n");
+                }
+                clientContext.setOutput(builder.toString());
+                
+            } else {
+                throw new ErrorInCommandException(MISSING_PARAMS);
+            }
+        }
+        
+    }
+    
+    class Chat {
+        private String name;
+        private Set<User> users;
+        private List<UserMessage> messages;
+        
+        Chat(String name) {
+            this.name = name;
+            users = new LinkedHashSet<>(ServerContext.MAX_CLIENTS_PER_CHANNEL);
+            messages = new LimitedSizeQueue<>(ServerContext.MAX_MESSAGES);
+        }
+
+        void join(User user) throws ChannelMaxUsersException {
+            synchronized (users) {
+                if (users.contains(user)) {
+                    return;
+                }
+                if (users.size() == ServerContext.MAX_CLIENTS_PER_CHANNEL) {
+                    throw new ChannelMaxUsersException();
+                }
+            }
+        }
+
+        public List<UserMessage> getMessages() {
+            return messages;
+        }
+    }
+
     public IRCServer(int port) {
         this.port = port;
         this.commandDecoder = new CommandDecoder();
+        chats = new HashMap<>();
     }
     
     public void run() throws Exception {
@@ -91,7 +171,7 @@ public class IRCServer implements ServerContext {
     }
 
     @Override
-    public void handleCommand(ClientContext clientContext, String command) throws UnknownCommandError, ErrorInCommandException {
+    public void handleCommand(ClientContext clientContext, String command) throws IRCException {
         Command cmd = commandDecoder.createCommand(command);
         if (cmd != null) {
             cmd.run(clientContext, this, command);

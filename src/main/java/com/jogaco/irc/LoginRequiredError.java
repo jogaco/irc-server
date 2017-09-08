@@ -1,5 +1,5 @@
 package com.jogaco.irc;
 
-class LoginRequiredError extends Exception {
+class LoginRequiredError extends IRCException {
 
 }

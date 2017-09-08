@@ -1,6 +1,6 @@
 package com.jogaco.irc;
 
-class UnknownCommandError extends Exception {
+class UnknownCommandError extends IRCException {
 
     private final String command;
 

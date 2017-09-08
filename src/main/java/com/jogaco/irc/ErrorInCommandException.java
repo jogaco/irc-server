@@ -1,8 +1,8 @@
 package com.jogaco.irc;
 
-public class ErrorInCommandException extends Exception {
+public class ErrorInCommandException extends IRCException {
 
-    public ErrorInCommandException(String msg) {
+    ErrorInCommandException(String msg) {
         super(msg);
     }
 
