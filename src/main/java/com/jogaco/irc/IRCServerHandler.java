@@ -1,11 +1,10 @@
 package com.jogaco.irc;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Handles a server-side channel.
@@ -23,19 +22,24 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf in = (ByteBuf) msg;
         String command = in.toString(io.netty.util.CharsetUtil.US_ASCII);
+        String response = null;
         try {
             serverContext.handleCommand(this, command);
+            if (this.output != null) {
+                response = output;
+            }
         } catch (UnknownCommandError ex) {
             // Logger.getLogger(IRCServerHandler.class.getName()).log(Level.SEVERE, null, ex);
-            ctx.write("Unknown Command Error:" + ex.getCommand());
+            response = "Unknown Command Error:" + ex.getCommand();
             
         } catch (LoginRequiredError ex) {
-            ctx.write("Please log in with /login user passwd");
+            response = "Please log in with /login user passwd";
         }
-        if (this.output != null) {
-            ctx.write(this.output);
+        if (response != null) {
+            ctx.write(Unpooled.copiedBuffer(response.getBytes()));
+            ctx.write(Unpooled.copiedBuffer(System.lineSeparator().getBytes()));
+            ctx.flush();
         }
-        ctx.flush();
         ((ByteBuf) msg).release();
     }
 

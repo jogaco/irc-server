@@ -1,5 +1,6 @@
 package com.jogaco.irc;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import static org.hamcrest.CoreMatchers.is;
@@ -18,7 +19,9 @@ public class IRCServerHandlerTest {
         
         assertThat(handler.getUser().getUsername(), is("user"));
         
-        String str = channel.readOutbound();
-        assertThat(str, is("Welcome"));
+        ByteBuf buf = channel.readOutbound();
+        String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
+
+        assertThat(response, is("Welcome"));
     }
 }
