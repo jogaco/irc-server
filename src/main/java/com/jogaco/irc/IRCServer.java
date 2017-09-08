@@ -10,7 +10,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
     
-public class IRCServer {
+public class IRCServer implements ServerContext {
     
     private int port;
     
@@ -28,7 +28,7 @@ public class IRCServer {
              .childHandler(new ChannelInitializer<SocketChannel>() {
                  @Override
                  public void initChannel(SocketChannel ch) throws Exception {
-                     ch.pipeline().addLast(new IRCServerHandler());
+                     ch.pipeline().addLast(new IRCServerHandler(IRCServer.this));
                  }
              })
              .option(ChannelOption.SO_BACKLOG, 128)
@@ -43,6 +43,16 @@ public class IRCServer {
         } finally {
             workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
+        }
+    }
+
+    @Override
+    public void handleCommand(ClientContext clientContext, String command) {
+        if (command.startsWith("/login")) {
+            String[] params = command.split(" ");
+            if (params.length == 3) {
+                clientContext.setUser(new User(params[1], params[2]));
+            }
         }
     }
     

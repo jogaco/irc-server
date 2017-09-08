@@ -1,18 +1,21 @@
 package com.jogaco.irc;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
-import io.netty.handler.codec.string.StringDecoder;
-import java.nio.charset.StandardCharsets;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class IRCServerHandlerTest {
+    
     @Test
-    public void nettyTest() {
-        EmbeddedChannel channel = new EmbeddedChannel(new StringDecoder(StandardCharsets.UTF_8));
-        channel.writeInbound("echo");
-        String myObject = channel.readInbound();
-        // Perform checks on your object
-        assertEquals("echo", myObject);
+    public void handleLogin() {
+        ServerContext serverContext = new IRCServer(1);
+        
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+        channel.writeInbound(Unpooled.wrappedBuffer("/login user user".getBytes()));
+        
+        assertThat(handler.getUser().getUsername(), is("user"));
     }
 }
