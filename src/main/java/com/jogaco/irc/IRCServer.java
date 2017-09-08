@@ -38,22 +38,23 @@ public class IRCServer implements ServerContext {
     
     interface Command {
         
-        void run(ClientContext clientContext, ServerContext serverContext, String command);
+        void run(ClientContext clientContext, ServerContext serverContext, String command) throws ErrorInCommandException;
     }
     
     class LoginCommand implements Command {
+        static final String MISSING_PARAMS = "Error: /login user passwd";
 
         @Override
-        public void run(ClientContext clientContext, ServerContext serverContext, String command) {
+        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws ErrorInCommandException {
             String[] params = command.split(" ");
             if (params.length == 3) {
                 User user = new User(params[1], params[2]);
                 clientContext.setUser(user);
                 clientContext.setOutput("Welcome");
+            } else {
+                throw new ErrorInCommandException(MISSING_PARAMS);
             }
         }
-
-        
     }
     
     public IRCServer(int port) {
@@ -90,7 +91,7 @@ public class IRCServer implements ServerContext {
     }
 
     @Override
-    public void handleCommand(ClientContext clientContext, String command) throws UnknownCommandError {
+    public void handleCommand(ClientContext clientContext, String command) throws UnknownCommandError, ErrorInCommandException {
         Command cmd = commandDecoder.createCommand(command);
         if (cmd != null) {
             cmd.run(clientContext, this, command);

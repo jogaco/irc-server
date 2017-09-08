@@ -5,6 +5,8 @@ import io.netty.buffer.Unpooled;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Handles a server-side channel.
@@ -34,6 +36,8 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
             
         } catch (LoginRequiredError ex) {
             response = "Please log in with /login user passwd";
+        } catch (ErrorInCommandException ex) {
+            response = ex.getMessage();
         }
         if (response != null) {
             ctx.write(Unpooled.copiedBuffer(response.getBytes()));
