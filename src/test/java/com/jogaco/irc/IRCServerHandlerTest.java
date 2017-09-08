@@ -17,5 +17,8 @@ public class IRCServerHandlerTest {
         channel.writeInbound(Unpooled.wrappedBuffer("/login user user".getBytes()));
         
         assertThat(handler.getUser().getUsername(), is("user"));
+        
+        String str = channel.readOutbound();
+        assertThat(str, is("Welcome"));
     }
 }

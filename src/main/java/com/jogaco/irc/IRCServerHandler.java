@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Handles a server-side channel.
@@ -11,6 +13,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 public class IRCServerHandler extends ChannelInboundHandlerAdapter implements ClientContext {
     private User user;
     private ServerContext serverContext;
+    private String output;
     
     public IRCServerHandler(ServerContext context) {
         serverContext = context;
@@ -18,11 +21,21 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        // Discard the received data silently.
-        ctx.channel();
         ByteBuf in = (ByteBuf) msg;
         String command = in.toString(io.netty.util.CharsetUtil.US_ASCII);
-        serverContext.handleCommand(this, command);
+        try {
+            serverContext.handleCommand(this, command);
+        } catch (UnknownCommandError ex) {
+            // Logger.getLogger(IRCServerHandler.class.getName()).log(Level.SEVERE, null, ex);
+            ctx.write("Unknown Command Error:" + ex.getCommand());
+            
+        } catch (LoginRequiredError ex) {
+            ctx.write("Please log in with /login user passwd");
+        }
+        if (this.output != null) {
+            ctx.write(this.output);
+        }
+        ctx.flush();
         ((ByteBuf) msg).release();
     }
 
@@ -41,5 +54,10 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     @Override
     public User getUser() {
         return user;
+    }
+
+    @Override
+    public void setOutput(String output) {
+        this.output = output;
     }
 }
