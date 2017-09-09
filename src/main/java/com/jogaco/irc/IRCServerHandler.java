@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Handles a server-side channel.
+ * Handles a server-side channel. One instance per client connection
  */
 public class IRCServerHandler extends ChannelInboundHandlerAdapter implements ClientContext {
     private User user;
@@ -46,7 +46,9 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         if (response != null) {
             StringBuilder builder = new StringBuilder(response.length() + 1);
             builder.append(response);
-            builder.append(System.lineSeparator());
+            if (!response.endsWith(System.lineSeparator())) {
+                builder.append(System.lineSeparator());
+            }
             ctx.write(Unpooled.copiedBuffer(builder.toString().getBytes()));
             ctx.flush();
         }

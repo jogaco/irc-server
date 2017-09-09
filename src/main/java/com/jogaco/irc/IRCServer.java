@@ -68,7 +68,7 @@ public class IRCServer implements ServerContext {
             userChannel.leave(user);
         }
     }
-    
+
     class CommandDecoder {
         
         Command createCommand(String command) {
@@ -79,6 +79,8 @@ public class IRCServer implements ServerContext {
                     return new ChannelCommand();
                 } else if (command.startsWith("/leave ") || command.equals("/leave")) {
                     return new LogoutCommand();
+                } else if (command.startsWith("/users ") || command.equals("/users")) {
+                    return new UsersCommand();
                 }
             }
             return null;
@@ -154,6 +156,24 @@ public class IRCServer implements ServerContext {
         
     }
     
+    class UsersCommand implements Command {
+
+        @Override
+        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
+            User user = clientContext.getUser();
+            Chat chat = user.getCurrentChannel();
+            if (chat != null) {
+                final List<User> users = chat.getUsers();
+                StringBuilder builder = new StringBuilder();
+                for (User usr : users) {
+                    builder.append(usr.getUsername());
+                    builder.append(System.lineSeparator());
+                }
+                clientContext.setOutput(builder.toString());
+            }
+        }
+        
+    }
     class Chat {
         private String name;
         private Set<User> users;

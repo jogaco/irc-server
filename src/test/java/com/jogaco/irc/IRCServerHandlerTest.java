@@ -8,6 +8,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.List;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import org.junit.Test;
@@ -174,5 +175,38 @@ public class IRCServerHandlerTest {
         
         assertThat(usersInChannel2.contains(user), is(true));
         assertThat(usersInChannel1.contains(user), is(false));
+    }
+
+    @Test
+    public void handleUsers() {
+        ServerContext serverContext = new IRCServer(1);
+
+        User user = new User("user", "user");
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        IRCServerHandler handlerMock = spy(handler);
+        when(handlerMock.getUser()).thenReturn(user);
+        EmbeddedChannel channel = new EmbeddedChannel(handlerMock);
+        channel.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+        
+        User user2 = new User("user2", "user2");
+        IRCServerHandler handler2 = new IRCServerHandler(serverContext);
+        IRCServerHandler handlerMock2 = spy(handler2);
+        when(handlerMock2.getUser()).thenReturn(user2);
+        EmbeddedChannel channel2 = new EmbeddedChannel(handlerMock2);
+        channel2.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+        
+
+        channel.writeInbound(Unpooled.wrappedBuffer("/users".getBytes()));
+
+        ByteBuf buf = channel.readOutbound();
+        
+        buf = channel.readOutbound();
+        String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
+
+        assertThat(response, is("user" + lineSep + "user2" + lineSep));
+        
+        Chat chat = serverContext.getOrCreateChat("channel");
+        final List<User> users = chat.getUsers();
+        assertThat(users, hasItems(user, user2));
     }
 }
