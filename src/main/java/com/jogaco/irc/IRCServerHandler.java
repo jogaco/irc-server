@@ -36,7 +36,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
             
         } catch (LoginRequiredError ex) {
             response = PLEASE_LOG_IN;
-        } catch (ErrorInCommandException ex) {
+        } catch (ErrorInCommandException | UserWrongPasswordException ex) {
             response = ex.getMessage();
         } catch (ChannelMaxUsersException ex) {
             response = "Too many users";
@@ -45,7 +45,6 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         }
         if (response != null) {
             ctx.write(Unpooled.copiedBuffer(response.getBytes()));
-            ctx.write(Unpooled.copiedBuffer(System.lineSeparator().getBytes()));
             ctx.flush();
         }
         ((ByteBuf) msg).release();

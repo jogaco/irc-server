@@ -8,6 +8,8 @@ public interface ServerContext {
     
 
     public void handleCommand(ClientContext clientContext, String command) throws IRCException;
+    
+    public void loginOrCreateUser(User user) throws IRCException;
 
     public Chat getOrCreateChat(String param);
 }

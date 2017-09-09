@@ -15,6 +15,12 @@ public class User {
     public String getUsername() {
         return username;
     }
+    
+    public void verifyPasswd(User user) throws UserWrongPasswordException {
+        if (!this.passwd.equals(user.passwd)) {
+            throw new UserWrongPasswordException();
+        }
+    }
 
     @Override
     public int hashCode() {

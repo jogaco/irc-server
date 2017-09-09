@@ -45,6 +45,23 @@ public class IRCServerHandlerTest {
     }
     
     @Test
+    public void handleLoginWrongPassword() {
+        ServerContext serverContext = new IRCServer(1);
+        
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+        channel.writeInbound(Unpooled.wrappedBuffer("/login user user".getBytes()));
+        ByteBuf buf = channel.readOutbound();
+        
+        channel.writeInbound(Unpooled.wrappedBuffer("/login user wrong".getBytes()));
+        buf = channel.readOutbound();
+        
+        String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
+
+        assertThat(response, is(LoginCommand.WRONG_PASSWD));
+    }
+    
+    @Test
     public void handleJoinChannelNoLogin() {
         ServerContext serverContext = new IRCServer(1);
         

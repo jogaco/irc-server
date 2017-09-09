@@ -29,6 +29,7 @@ public class IRCServer implements ServerContext {
     private int port;
     private final CommandDecoder commandDecoder;
     private final Map<String, Chat> chats;
+    private final Map<String, User> users;
 
     @Override
     public Chat getOrCreateChat(String name) {
@@ -41,6 +42,19 @@ public class IRCServer implements ServerContext {
             }
         }
         return theChat;
+    }
+
+    @Override
+    public void loginOrCreateUser(User user) throws UserWrongPasswordException {
+        User theUser = null;
+        synchronized (users) {
+            theUser = users.get(user.getUsername());
+            if (theUser == null) {
+                theUser = user;
+                users.put(user.getUsername(), theUser);
+            }
+        }
+        theUser.verifyPasswd(user);
     }
     
     class CommandDecoder {
@@ -66,12 +80,18 @@ public class IRCServer implements ServerContext {
         
         static final String MISSING_PARAMS = "Error: /login user passwd";
         static final String SUCCESS = "Welcome";
+        static final String WRONG_PASSWD = "Error: incorrect password";
 
         @Override
-        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws ErrorInCommandException {
+        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
             String[] params = command.split(" ");
             if (params.length == 3) {
                 User user = new User(params[1], params[2]);
+                try {
+                    serverContext.loginOrCreateUser(user);
+                } catch (UserWrongPasswordException ex) {
+                    throw new UserWrongPasswordException(WRONG_PASSWD);
+                }
                 clientContext.setUser(user);
                 clientContext.setOutput(SUCCESS);
             } else {
@@ -140,6 +160,7 @@ public class IRCServer implements ServerContext {
         this.port = port;
         this.commandDecoder = new CommandDecoder();
         chats = new HashMap<>();
+        users = new HashMap<>();
     }
     
     public void run() throws Exception {
