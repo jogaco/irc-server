@@ -61,9 +61,9 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         if (response != null) {
             StringBuilder builder = new StringBuilder(response.length() + 1);
             builder.append(response);
-            if (!response.endsWith(System.lineSeparator()) && !response.isEmpty()) {
-                builder.append(System.lineSeparator());
-            }
+//            if (!response.endsWith(System.lineSeparator()) && !response.isEmpty()) {
+//                builder.append(System.lineSeparator());
+//            }
             ctx.write(Unpooled.copiedBuffer(builder.toString().getBytes()));
             ctx.flush();
         }

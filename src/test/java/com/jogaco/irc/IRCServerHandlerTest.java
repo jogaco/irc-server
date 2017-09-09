@@ -32,7 +32,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.SUCCESS + lineSep));
+        assertThat(response, is(LoginCommand.SUCCESS));
     }
     
     @Test
@@ -46,7 +46,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.MISSING_PARAMS + lineSep));
+        assertThat(response, is(LoginCommand.MISSING_PARAMS));
     }
     
     @Test
@@ -63,7 +63,7 @@ public class IRCServerHandlerTest {
         
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.WRONG_PASSWD + lineSep));
+        assertThat(response, is(LoginCommand.WRONG_PASSWD));
     }
     
     @Test
@@ -77,7 +77,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(IRCServerHandler.PLEASE_LOG_IN + lineSep));
+        assertThat(response, is(IRCServerHandler.PLEASE_LOG_IN));
     }
     
     @Test
@@ -95,7 +95,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(ChannelCommand.MISSING_PARAMS + lineSep));
+        assertThat(response, is(ChannelCommand.MISSING_PARAMS));
     }
     
     @Test
@@ -163,7 +163,7 @@ public class IRCServerHandlerTest {
         buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LogoutCommand.SUCCESS + lineSep));
+        assertThat(response, is(LogoutCommand.SUCCESS));
     }
     
     @Test

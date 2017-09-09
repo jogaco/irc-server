@@ -74,6 +74,7 @@ public class IRCServer implements ServerContext {
     }
 
     class CommandDecoder {
+        
         Command createCommand(String command) {
             command = command.trim();
             
@@ -101,9 +102,9 @@ public class IRCServer implements ServerContext {
     
     class LoginCommand implements Command {
         
-        static final String MISSING_PARAMS = "Error: /login user passwd";
-        static final String SUCCESS = "Welcome";
-        static final String WRONG_PASSWD = "Error: incorrect password";
+        static final String MISSING_PARAMS = "Error: /login user passwd\n";
+        static final String SUCCESS = "Welcome\n";
+        static final String WRONG_PASSWD = "Error: incorrect password\n";
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
@@ -124,7 +125,7 @@ public class IRCServer implements ServerContext {
     }
     
     class LogoutCommand implements Command {
-        static final String SUCCESS = "Goodbye";
+        static final String SUCCESS = "Goodbye\n";
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
@@ -135,7 +136,7 @@ public class IRCServer implements ServerContext {
     }
     
     class ChannelCommand implements Command {
-        static final String MISSING_PARAMS = "Error: /channel channel_name";
+        static final String MISSING_PARAMS = "Error: /channel channel_name\n";
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
@@ -146,13 +147,15 @@ public class IRCServer implements ServerContext {
             if (params.length == 2) {
                 Chat chat = serverContext.getOrCreateChat(params[1]);
                 chat.join(clientContext);
+
                 final List<UserMessage> messages = chat.getMessages();
                 StringBuilder builder = new StringBuilder();
                 for (UserMessage usrMsg : messages) {
-                    builder.append(usrMsg.getUser());
-                    builder.append(": ");
-                    builder.append(usrMsg.getMessage());
+                    builder.append(usrMsg.getFormattedMessage());
                     builder.append(System.lineSeparator());
+                }
+                if (!messages.isEmpty()) {
+                    builder.deleteCharAt(builder.length()-1);
                 }
                 clientContext.setOutput(builder.toString());
                 
@@ -220,8 +223,8 @@ public class IRCServer implements ServerContext {
                 users.add(user);
                 clients.add(client);
                 
-                client.setCurrentChannel(this);
             }
+            client.setCurrentChannel(this);
         }
 
         public List<UserMessage> getMessages() {
@@ -243,6 +246,11 @@ public class IRCServer implements ServerContext {
         void sendMessage(String command, ClientContext clientContext) {
             if (clientContext.getUser() != null) {
                 UserMessage userMsg = new UserMessage(clientContext.getUser(), command);
+
+                synchronized (messages) {
+                    messages.add(userMsg);
+                }
+
                 for (ClientContext otherClient : clients) {
                     if (clientContext != otherClient) {
                         otherClient.notify(userMsg);
