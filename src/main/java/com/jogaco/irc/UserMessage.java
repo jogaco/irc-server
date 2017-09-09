@@ -10,6 +10,9 @@ public class UserMessage {
         this.message = msg;
     }
 
+    public String getUsername() {
+        return user.getUsername();
+    }
     public User getUser() {
         return user;
     }

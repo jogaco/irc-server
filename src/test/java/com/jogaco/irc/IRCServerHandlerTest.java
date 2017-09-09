@@ -113,7 +113,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is("" + lineSep)); // no messages on channel
+        assertThat(response, is("")); // no messages on channel
 
         Chat chat = serverContext.getOrCreateChat("channel");
         List<User> usersInChannel = chat.getUsers();
@@ -194,7 +194,6 @@ public class IRCServerHandlerTest {
         when(handlerMock2.getUser()).thenReturn(user2);
         EmbeddedChannel channel2 = new EmbeddedChannel(handlerMock2);
         channel2.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
-        
 
         channel.writeInbound(Unpooled.wrappedBuffer("/users".getBytes()));
 
@@ -209,4 +208,31 @@ public class IRCServerHandlerTest {
         final List<User> users = chat.getUsers();
         assertThat(users, hasItems(user, user2));
     }
+    @Test
+    public void handleChannelMessage() {
+        ServerContext serverContext = new IRCServer(1);
+
+        User user = new User("user", "user");
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        IRCServerHandler handlerMock = spy(handler);
+        when(handlerMock.getUser()).thenReturn(user);
+        EmbeddedChannel channel = new EmbeddedChannel(handlerMock);
+        channel.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+        
+        User user2 = new User("user2", "user2");
+        IRCServerHandler handler2 = new IRCServerHandler(serverContext);
+        IRCServerHandler handlerMock2 = spy(handler2);
+        when(handlerMock2.getUser()).thenReturn(user2);
+        EmbeddedChannel channel2 = new EmbeddedChannel(handlerMock2);
+        channel2.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+        ByteBuf buf = channel2.readOutbound();
+
+        channel.writeInbound(Unpooled.wrappedBuffer("message".getBytes()));
+
+        buf = channel2.readOutbound();
+        String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
+
+        assertThat(response, is("user: message"));
+    }
+
 }

@@ -3,6 +3,7 @@ package com.jogaco.irc;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import java.util.logging.Level;
@@ -16,11 +17,24 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     private ServerContext serverContext;
     private String output;
     private IRCServer.Chat channel;
+    private Channel netChannel;
     
     public IRCServerHandler(ServerContext context) {
         serverContext = context;
     }
     
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) {
+        netChannel = ctx.channel();
+    }
+    
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) {
+        if (channel != null) {
+            channel.leave(this);
+        }
+    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf in = (ByteBuf) msg;
@@ -47,7 +61,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         if (response != null) {
             StringBuilder builder = new StringBuilder(response.length() + 1);
             builder.append(response);
-            if (!response.endsWith(System.lineSeparator())) {
+            if (!response.endsWith(System.lineSeparator()) && !response.isEmpty()) {
                 builder.append(System.lineSeparator());
             }
             ctx.write(Unpooled.copiedBuffer(builder.toString().getBytes()));
@@ -95,6 +109,12 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     
     @Override
     public void notify(UserMessage msg) {
-        
-    }
+        ByteBuf buf = Unpooled.buffer();
+        StringBuilder builder = new StringBuilder(msg.getMessage().length() + msg.getUsername().length() + 2);
+        builder.append(msg.getUsername());
+        builder.append(": ");
+        builder.append(msg.getMessage());
+        buf.writeBytes(builder.toString().getBytes());
+        netChannel.writeAndFlush(buf);
+   }
 }

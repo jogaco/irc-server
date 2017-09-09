@@ -74,9 +74,10 @@ public class IRCServer implements ServerContext {
     }
 
     class CommandDecoder {
-        
         Command createCommand(String command) {
-            if (command != null) {
+            command = command.trim();
+            
+            if (command != null && !command.isEmpty()) {
                 if (command.startsWith("/login ") || command.equals("/login")) {
                     return new LoginCommand();
                 } else if (command.startsWith("/join ") || command.equals("/join")) {
@@ -85,6 +86,8 @@ public class IRCServer implements ServerContext {
                     return new LogoutCommand();
                 } else if (command.startsWith("/users ") || command.equals("/users")) {
                     return new UsersCommand();
+                } else {
+                    return new MessageCommand();
                 }
             }
             return null;
@@ -149,7 +152,7 @@ public class IRCServer implements ServerContext {
                     builder.append(usrMsg.getUser());
                     builder.append(": ");
                     builder.append(usrMsg.getMessage());
-                    builder.append("\n");
+                    builder.append(System.lineSeparator());
                 }
                 clientContext.setOutput(builder.toString());
                 
@@ -178,6 +181,20 @@ public class IRCServer implements ServerContext {
         }
         
     }
+    
+    class MessageCommand implements Command {
+
+        @Override
+        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
+            Chat chat = clientContext.getCurrentChannel();
+            if (chat != null) {
+                chat.sendMessage(command, clientContext);
+            }
+            clientContext.setOutput("");
+        }
+        
+    }
+    
     class Chat {
         final private String name;
         final private Set<User> users;
@@ -215,11 +232,23 @@ public class IRCServer implements ServerContext {
             User user = client.getUser();
             synchronized (users) {
                 users.remove(user);
+                clients.remove(client);
             }
         }
 
         List<User> getUsers() {
             return new ArrayList<>(users);
+        }
+
+        void sendMessage(String command, ClientContext clientContext) {
+            if (clientContext.getUser() != null) {
+                UserMessage userMsg = new UserMessage(clientContext.getUser(), command);
+                for (ClientContext otherClient : clients) {
+                    if (clientContext != otherClient) {
+                        otherClient.notify(userMsg);
+                    }
+                }
+            }
         }
     }
 
