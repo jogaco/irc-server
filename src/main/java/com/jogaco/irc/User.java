@@ -25,6 +25,10 @@ public class User {
     }
 
     public void setCurrentChannel(Chat channel) {
+        if (this.channel != null) {
+            this.channel.leave(this);
+        }
+
         this.channel = channel;
     }
 

@@ -173,6 +173,8 @@ public class IRCServer implements ServerContext {
                 if (users.size() == ServerContext.MAX_CLIENTS_PER_CHANNEL) {
                     throw new ChannelMaxUsersException();
                 }
+                users.add(user);
+                user.setCurrentChannel(this);
             }
         }
 

@@ -112,6 +112,11 @@ public class IRCServerHandlerTest {
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
         assertThat(response, is("")); // no messages on channel
+
+        Chat chat = serverContext.getOrCreateChat("channel");
+        List<User> usersInChannel = chat.getUsers();
+        
+        assertThat(usersInChannel.contains(user), is(true));
     }
     
     @Test
@@ -148,5 +153,25 @@ public class IRCServerHandlerTest {
         List<User> usersInChannel = chat.getUsers();
         
         assertThat(usersInChannel.contains(user), is(false));
+    }
+    
+    @Test
+    public void handleJoinChannelChangeChannel() {
+        ServerContext serverContext = new IRCServer(1);
+        
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+        channel.writeInbound(Unpooled.wrappedBuffer("/login user user".getBytes()));
+        User user = handler.getUser();
+        channel.writeInbound(Unpooled.wrappedBuffer("/join channel1".getBytes()));
+        channel.writeInbound(Unpooled.wrappedBuffer("/join channel2".getBytes()));
+
+        Chat chat1 = serverContext.getOrCreateChat("channel1");
+        List<User> usersInChannel1 = chat1.getUsers();
+        Chat chat2 = serverContext.getOrCreateChat("channel2");
+        List<User> usersInChannel2 = chat2.getUsers();
+        
+        assertThat(usersInChannel2.contains(user), is(true));
+        assertThat(usersInChannel1.contains(user), is(false));
     }
 }
