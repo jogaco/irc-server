@@ -9,6 +9,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -56,6 +57,17 @@ public class IRCServer implements ServerContext {
         }
         theUser.verifyPasswd(user);
     }
+
+    @Override
+    public void logout(User user) {
+        synchronized (users) {
+            users.remove(user);
+        }
+        Chat userChannel = user.getCurrentChannel();
+        if (userChannel != null) {
+            userChannel.leave(user);
+        }
+    }
     
     class CommandDecoder {
         
@@ -65,6 +77,8 @@ public class IRCServer implements ServerContext {
                     return new LoginCommand();
                 } else if (command.startsWith("/join ") || command.equals("/join")) {
                     return new ChannelCommand();
+                } else if (command.startsWith("/leave ") || command.equals("/leave")) {
+                    return new LogoutCommand();
                 }
             }
             return null;
@@ -98,6 +112,17 @@ public class IRCServer implements ServerContext {
                 throw new ErrorInCommandException(MISSING_PARAMS);
             }
         }
+    }
+    
+    class LogoutCommand implements Command {
+        static final String SUCCESS = "Goodbye";
+
+        @Override
+        public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
+            serverContext.logout(clientContext.getUser());
+            clientContext.setOutput(SUCCESS);
+        }
+        
     }
     
     class ChannelCommand implements Command {
@@ -153,6 +178,16 @@ public class IRCServer implements ServerContext {
 
         public List<UserMessage> getMessages() {
             return messages;
+        }
+
+        void leave(User user) {
+            synchronized (users) {
+                users.remove(user);
+            }
+        }
+
+        List<User> getUsers() {
+            return new ArrayList<>(users);
         }
     }
 

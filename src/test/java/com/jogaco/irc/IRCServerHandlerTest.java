@@ -1,10 +1,13 @@
 package com.jogaco.irc;
 
 import com.jogaco.irc.IRCServer.ChannelCommand;
+import com.jogaco.irc.IRCServer.Chat;
 import com.jogaco.irc.IRCServer.LoginCommand;
+import com.jogaco.irc.IRCServer.LogoutCommand;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import org.junit.Test;
@@ -109,5 +112,41 @@ public class IRCServerHandlerTest {
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
         assertThat(response, is("")); // no messages on channel
+    }
+    
+    @Test
+    public void handleLeaveNoChannelJoined() {
+        ServerContext serverContext = new IRCServer(1);
+        
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+        channel.writeInbound(Unpooled.wrappedBuffer("/login user user".getBytes()));
+
+        channel.writeInbound(Unpooled.wrappedBuffer("/leave".getBytes()));
+        
+        ByteBuf buf = channel.readOutbound();
+        
+        buf = channel.readOutbound();
+        String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
+
+        assertThat(response, is(LogoutCommand.SUCCESS));
+    }
+    
+    @Test
+    public void handleLeaveChannelJoined() {
+        ServerContext serverContext = new IRCServer(1);
+        
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        EmbeddedChannel channel = new EmbeddedChannel(handler);
+        channel.writeInbound(Unpooled.wrappedBuffer("/login user user".getBytes()));
+        User user = handler.getUser();
+        channel.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+
+        channel.writeInbound(Unpooled.wrappedBuffer("/leave".getBytes()));
+        
+        Chat chat = serverContext.getOrCreateChat("channel");
+        List<User> usersInChannel = chat.getUsers();
+        
+        assertThat(usersInChannel.contains(user), is(false));
     }
 }

@@ -1,11 +1,13 @@
 package com.jogaco.irc;
 
+import com.jogaco.irc.IRCServer.Chat;
 import java.util.Objects;
 
 
 public class User {
     private final String username;
     private final String passwd;
+    private Chat channel;
 
     public User(String username, String passwd) {
         this.username = username;
@@ -20,6 +22,14 @@ public class User {
         if (!this.passwd.equals(user.passwd)) {
             throw new UserWrongPasswordException();
         }
+    }
+
+    public void setCurrentChannel(Chat channel) {
+        this.channel = channel;
+    }
+
+    public Chat getCurrentChannel() {
+        return channel;
     }
 
     @Override
