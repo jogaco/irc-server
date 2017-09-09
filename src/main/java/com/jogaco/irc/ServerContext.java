@@ -11,7 +11,7 @@ public interface ServerContext {
     
     public void loginOrCreateUser(User user) throws IRCException;
 
-    public void logout(User user);
+    public boolean logout(ClientContext client);
 
     public Chat getOrCreateChat(String param);
 }

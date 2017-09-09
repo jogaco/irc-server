@@ -59,14 +59,18 @@ public class IRCServer implements ServerContext {
     }
 
     @Override
-    public void logout(User user) {
-        synchronized (users) {
-            users.remove(user);
+    public boolean logout(ClientContext client) {
+        User user = client.getUser();
+        if (user != null) {
+            synchronized (users) {
+                users.remove(user);
+            }
+            Chat userChannel = client.getCurrentChannel();
+            if (userChannel != null) {
+                userChannel.leave(client);
+            }
         }
-        Chat userChannel = user.getCurrentChannel();
-        if (userChannel != null) {
-            userChannel.leave(user);
-        }
+        return user != null;
     }
 
     class CommandDecoder {
@@ -121,7 +125,7 @@ public class IRCServer implements ServerContext {
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
-            serverContext.logout(clientContext.getUser());
+            serverContext.logout(clientContext);
             clientContext.setOutput(SUCCESS);
         }
         
@@ -138,7 +142,7 @@ public class IRCServer implements ServerContext {
             String[] params = command.split(" ");
             if (params.length == 2) {
                 Chat chat = serverContext.getOrCreateChat(params[1]);
-                chat.join(clientContext.getUser());
+                chat.join(clientContext);
                 final List<UserMessage> messages = chat.getMessages();
                 StringBuilder builder = new StringBuilder();
                 for (UserMessage usrMsg : messages) {
@@ -161,7 +165,7 @@ public class IRCServer implements ServerContext {
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
             User user = clientContext.getUser();
-            Chat chat = user.getCurrentChannel();
+            Chat chat = clientContext.getCurrentChannel();
             if (chat != null) {
                 final List<User> users = chat.getUsers();
                 StringBuilder builder = new StringBuilder();
@@ -175,17 +179,20 @@ public class IRCServer implements ServerContext {
         
     }
     class Chat {
-        private String name;
-        private Set<User> users;
-        private List<UserMessage> messages;
+        final private String name;
+        final private Set<User> users;
+        final private List<UserMessage> messages;
+        final private Set<ClientContext> clients;
         
         Chat(String name) {
             this.name = name;
             users = new LinkedHashSet<>(ServerContext.MAX_CLIENTS_PER_CHANNEL);
             messages = new LimitedSizeQueue<>(ServerContext.MAX_MESSAGES);
+            clients = new LinkedHashSet<>(ServerContext.MAX_CLIENTS_PER_CHANNEL);
         }
 
-        void join(User user) throws ChannelMaxUsersException {
+        void join(ClientContext client) throws ChannelMaxUsersException {
+            User user = client.getUser();
             synchronized (users) {
                 if (users.contains(user)) {
                     return;
@@ -194,7 +201,9 @@ public class IRCServer implements ServerContext {
                     throw new ChannelMaxUsersException();
                 }
                 users.add(user);
-                user.setCurrentChannel(this);
+                clients.add(client);
+                
+                client.setCurrentChannel(this);
             }
         }
 
@@ -202,7 +211,8 @@ public class IRCServer implements ServerContext {
             return messages;
         }
 
-        void leave(User user) {
+        void leave(ClientContext client) {
+            User user = client.getUser();
             synchronized (users) {
                 users.remove(user);
             }

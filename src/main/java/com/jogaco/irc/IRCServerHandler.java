@@ -15,6 +15,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     private User user;
     private ServerContext serverContext;
     private String output;
+    private IRCServer.Chat channel;
     
     public IRCServerHandler(ServerContext context) {
         serverContext = context;
@@ -74,7 +75,26 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     }
 
     @Override
+    public void setCurrentChannel(IRCServer.Chat channel) {
+        if (this.channel != null) {
+            this.channel.leave(this);
+        }
+
+        this.channel = channel;
+    }
+
+    @Override
+    public IRCServer.Chat getCurrentChannel() {
+        return channel;
+    }
+
+    @Override
     public void setOutput(String output) {
         this.output = output;
+    }
+    
+    @Override
+    public void notify(UserMessage msg) {
+        
     }
 }

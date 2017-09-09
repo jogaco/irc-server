@@ -7,4 +7,11 @@ public interface ClientContext {
     User getUser();
 
     public void setOutput(String output);
+    
+    void notify(UserMessage msg);
+    
+    public void setCurrentChannel(IRCServer.Chat channel);
+
+    public IRCServer.Chat getCurrentChannel();
+
 }
