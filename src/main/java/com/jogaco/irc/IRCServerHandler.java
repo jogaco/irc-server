@@ -44,7 +44,10 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
             Logger.getLogger(IRCServerHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (response != null) {
-            ctx.write(Unpooled.copiedBuffer(response.getBytes()));
+            StringBuilder builder = new StringBuilder(response.length() + 1);
+            builder.append(response);
+            builder.append(System.lineSeparator());
+            ctx.write(Unpooled.copiedBuffer(builder.toString().getBytes()));
             ctx.flush();
         }
         ((ByteBuf) msg).release();

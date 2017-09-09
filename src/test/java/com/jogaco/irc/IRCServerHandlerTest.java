@@ -11,11 +11,12 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 import org.junit.Test;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 public class IRCServerHandlerTest {
+    
+    final static String lineSep = System.lineSeparator();
     
     @Test
     public void handleLogin() {
@@ -30,7 +31,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.SUCCESS));
+        assertThat(response, is(LoginCommand.SUCCESS + lineSep));
     }
     
     @Test
@@ -44,7 +45,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.MISSING_PARAMS));
+        assertThat(response, is(LoginCommand.MISSING_PARAMS + lineSep));
     }
     
     @Test
@@ -61,7 +62,7 @@ public class IRCServerHandlerTest {
         
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.WRONG_PASSWD));
+        assertThat(response, is(LoginCommand.WRONG_PASSWD + lineSep));
     }
     
     @Test
@@ -75,7 +76,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(IRCServerHandler.PLEASE_LOG_IN));
+        assertThat(response, is(IRCServerHandler.PLEASE_LOG_IN + lineSep));
     }
     
     @Test
@@ -93,7 +94,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(ChannelCommand.MISSING_PARAMS));
+        assertThat(response, is(ChannelCommand.MISSING_PARAMS + lineSep));
     }
     
     @Test
@@ -111,7 +112,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is("")); // no messages on channel
+        assertThat(response, is("" + lineSep)); // no messages on channel
 
         Chat chat = serverContext.getOrCreateChat("channel");
         List<User> usersInChannel = chat.getUsers();
@@ -134,7 +135,7 @@ public class IRCServerHandlerTest {
         buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LogoutCommand.SUCCESS));
+        assertThat(response, is(LogoutCommand.SUCCESS + lineSep));
     }
     
     @Test
