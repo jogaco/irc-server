@@ -132,8 +132,10 @@ public class IRCServerHandlerTest {
         EmbeddedChannel channel = new EmbeddedChannel(handlerMock);
         channel.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
 
-        UserMessage userMessage = new UserMessage(user, "message");
-        channel.writeInbound(Unpooled.wrappedBuffer(userMessage.getMessage().getBytes()));
+        UserMessage userMessage1 = new UserMessage(user, "message1");
+        channel.writeInbound(Unpooled.wrappedBuffer(userMessage1.getMessage().getBytes()));
+        UserMessage userMessage2 = new UserMessage(user, "message1");
+        channel.writeInbound(Unpooled.wrappedBuffer(userMessage2.getMessage().getBytes()));
         
         User user2 = new User("user2", "user2");
         IRCServerHandler handler2 = new IRCServerHandler(serverContext);
@@ -145,7 +147,7 @@ public class IRCServerHandlerTest {
 
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(userMessage.getFormattedMessage()));
+        assertThat(response, is(userMessage1.getFormattedMessage() + System.lineSeparator() + userMessage2.getFormattedMessage()));
     }
     
     @Test

@@ -178,15 +178,15 @@ public class IRCServer implements ServerContext {
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
             User user = clientContext.getUser();
             Chat chat = clientContext.getCurrentChannel();
+            StringBuilder builder = new StringBuilder();
             if (chat != null) {
                 final List<User> users = chat.getUsers();
-                StringBuilder builder = new StringBuilder();
                 for (User usr : users) {
                     builder.append(usr.getUsername());
                     builder.append(System.lineSeparator());
                 }
-                clientContext.setOutput(builder.toString());
             }
+            clientContext.setOutput(builder.toString());
         }
         
     }
@@ -219,6 +219,7 @@ public class IRCServer implements ServerContext {
 
         void join(ClientContext client) throws ChannelMaxUsersException {
             User user = client.getUser();
+
             synchronized (users) {
                 if (users.contains(user)) {
                     return;
@@ -228,8 +229,8 @@ public class IRCServer implements ServerContext {
                 }
                 users.add(user);
                 clients.add(client);
-                
             }
+
             client.setCurrentChannel(this);
         }
 
