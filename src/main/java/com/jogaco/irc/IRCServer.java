@@ -74,21 +74,27 @@ public class IRCServer implements ServerContext {
     }
 
     class CommandDecoder {
+        // Stateless: build upfront
+        private final Command LOGIN_COMMAND = new LoginCommand();
+        private final Command CHANNEL_COMMAND = new ChannelCommand();
+        private final Command LOGOUT_COMMAND = new LogoutCommand();
+        private final Command USERS_COMMAND = new UsersCommand();
+        private final Command MESSAGE_COMMAND = new MessageCommand();
         
         Command createCommand(String command) {
             command = command.trim();
             
             if (command != null && !command.isEmpty()) {
                 if (command.startsWith("/login ") || command.equals("/login")) {
-                    return new LoginCommand();
+                    return LOGIN_COMMAND;
                 } else if (command.startsWith("/join ") || command.equals("/join")) {
-                    return new ChannelCommand();
+                    return CHANNEL_COMMAND;
                 } else if (command.startsWith("/leave ") || command.equals("/leave")) {
-                    return new LogoutCommand();
+                    return LOGOUT_COMMAND;
                 } else if (command.startsWith("/users ") || command.equals("/users")) {
-                    return new UsersCommand();
+                    return USERS_COMMAND;
                 } else {
-                    return new MessageCommand();
+                    return MESSAGE_COMMAND;
                 }
             }
             return null;
@@ -300,7 +306,7 @@ public class IRCServer implements ServerContext {
         Command cmd = commandDecoder.createCommand(command);
         if (cmd != null) {
             cmd.run(clientContext, this, command);
-        } else {
+        } else if (!command.trim().isEmpty()) {
             throw new UnknownCommandError(command);
         }
     }
