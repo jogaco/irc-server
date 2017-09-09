@@ -110,11 +110,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     @Override
     public void notify(UserMessage msg) {
         ByteBuf buf = Unpooled.buffer();
-        StringBuilder builder = new StringBuilder(msg.getMessage().length() + msg.getUsername().length() + 2);
-        builder.append(msg.getUsername());
-        builder.append(": ");
-        builder.append(msg.getMessage());
-        buf.writeBytes(builder.toString().getBytes());
+        buf.writeBytes(msg.getFormattedMessage().getBytes());
         netChannel.writeAndFlush(buf);
    }
 }

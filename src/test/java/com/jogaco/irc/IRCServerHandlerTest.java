@@ -227,12 +227,13 @@ public class IRCServerHandlerTest {
         channel2.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
         ByteBuf buf = channel2.readOutbound();
 
-        channel.writeInbound(Unpooled.wrappedBuffer("message".getBytes()));
+        UserMessage userMessage = new UserMessage(user, "message");
+        channel.writeInbound(Unpooled.wrappedBuffer(userMessage.getMessage().getBytes()));
 
         buf = channel2.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is("user: message"));
+        assertThat(response, is(userMessage.getFormattedMessage()));
     }
 
 }
