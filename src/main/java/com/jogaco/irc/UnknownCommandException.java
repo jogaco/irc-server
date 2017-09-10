@@ -17,6 +17,7 @@ class UnknownCommandException extends IRCException {
     public String getMessage() {
         StringBuilder builder = new StringBuilder(UNKNOWN_COMMAND);
         builder.append(getCommand());
+        builder.append(System.lineSeparator());
         return builder.toString();
     }
 }

@@ -17,13 +17,18 @@ import java.util.Map;
 import java.util.Set;
 
 /*
+IRCServer
+
+Client: telnet
+Client Commands:
+
 /login name password — if user not exists create profile else login
 /join channel —try to join channel (max 10 active clients per channel is needed)
     If client’s limit exceeded - send error, otherwise join channel and send last N messages of activity
 /leave - disconnect client
 /users — show users in the channel
 text message terminated with CR - sends message to current channel.
-    Server must send new message to all connected to this channel clients. 
+    Server must send new message to all connected to this channel clients.
 */
 public class IRCServer implements ServerContext {
     
@@ -63,7 +68,7 @@ public class IRCServer implements ServerContext {
         User user = client.getUser();
         if (user != null) {
             synchronized (users) {
-                users.remove(user);
+                users.remove(user.getUsername());
             }
             Chat userChannel = client.getCurrentChannel();
             if (userChannel != null) {
