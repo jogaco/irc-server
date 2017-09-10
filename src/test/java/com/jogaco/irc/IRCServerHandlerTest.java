@@ -147,7 +147,7 @@ public class IRCServerHandlerTest {
 
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(userMessage1.getFormattedMessage() + System.lineSeparator() + userMessage2.getFormattedMessage()));
+        assertThat(response, is(userMessage1.getFormattedMessage() + userMessage2.getFormattedMessage()));
     }
     
     @Test

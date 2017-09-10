@@ -28,6 +28,7 @@ public class UserMessage {
             builder.append(getUsername());
             builder.append(": ");
             builder.append(getMessage());
+            builder.append(System.lineSeparator());
             formattedMessage = builder.toString();
         }
         return formattedMessage;

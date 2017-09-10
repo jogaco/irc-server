@@ -81,17 +81,15 @@ public class IRCServer implements ServerContext {
         private final Command USERS_COMMAND = new UsersCommand();
         private final Command MESSAGE_COMMAND = new MessageCommand();
         
-        Command createCommand(String command) {
-            command = command.trim();
-            
+        Command getCommand(String command) {
             if (command != null && !command.isEmpty()) {
                 if (command.startsWith("/login ") || command.equals("/login")) {
                     return LOGIN_COMMAND;
                 } else if (command.startsWith("/join ") || command.equals("/join")) {
                     return CHANNEL_COMMAND;
-                } else if (command.startsWith("/leave ") || command.equals("/leave")) {
+                } else if (command.equals("/leave")) {
                     return LOGOUT_COMMAND;
-                } else if (command.startsWith("/users ") || command.equals("/users")) {
+                } else if (command.equals("/users")) {
                     return USERS_COMMAND;
                 } else {
                     return MESSAGE_COMMAND;
@@ -142,7 +140,7 @@ public class IRCServer implements ServerContext {
     }
     
     class ChannelCommand implements Command {
-        static final String MISSING_PARAMS = "Error: /channel channel_name\n";
+        static final String MISSING_PARAMS = "Error: /join channel_name\n";
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
@@ -158,10 +156,6 @@ public class IRCServer implements ServerContext {
                 StringBuilder builder = new StringBuilder();
                 for (UserMessage usrMsg : messages) {
                     builder.append(usrMsg.getFormattedMessage());
-                    builder.append(System.lineSeparator());
-                }
-                if (!messages.isEmpty()) {
-                    builder.deleteCharAt(builder.length()-1);
                 }
                 clientContext.setOutput(builder.toString());
                 
@@ -176,7 +170,6 @@ public class IRCServer implements ServerContext {
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
-            User user = clientContext.getUser();
             Chat chat = clientContext.getCurrentChannel();
             StringBuilder builder = new StringBuilder();
             if (chat != null) {
@@ -304,7 +297,8 @@ public class IRCServer implements ServerContext {
 
     @Override
     public void handleCommand(ClientContext clientContext, String command) throws IRCException {
-        Command cmd = commandDecoder.createCommand(command);
+        command = command.trim();
+        Command cmd = commandDecoder.getCommand(command);
         if (cmd != null) {
             cmd.run(clientContext, this, command);
         } else if (!command.trim().isEmpty()) {
