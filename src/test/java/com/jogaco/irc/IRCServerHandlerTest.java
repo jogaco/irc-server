@@ -63,7 +63,7 @@ public class IRCServerHandlerTest {
         
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(LoginCommand.WRONG_PASSWD));
+        assertThat(response, is(UserWrongPasswordException.WRONG_PASSWD));
     }
     
     @Test
@@ -77,7 +77,7 @@ public class IRCServerHandlerTest {
         ByteBuf buf = channel.readOutbound();
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
-        assertThat(response, is(IRCServerHandler.PLEASE_LOG_IN));
+        assertThat(response, is(LoginRequiredException.PLEASE_LOG_IN));
     }
     
     @Test

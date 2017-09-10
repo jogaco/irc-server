@@ -108,7 +108,6 @@ public class IRCServer implements ServerContext {
         
         static final String MISSING_PARAMS = "Error: /login user passwd\n";
         static final String SUCCESS = "Welcome\n";
-        static final String WRONG_PASSWD = "Error: incorrect password\n";
 
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
@@ -118,7 +117,7 @@ public class IRCServer implements ServerContext {
                 try {
                     serverContext.loginOrCreateUser(user);
                 } catch (UserWrongPasswordException ex) {
-                    throw new UserWrongPasswordException(WRONG_PASSWD);
+                    throw new UserWrongPasswordException();
                 }
                 clientContext.setUser(user);
                 clientContext.setOutput(SUCCESS);
@@ -145,7 +144,7 @@ public class IRCServer implements ServerContext {
         @Override
         public void run(ClientContext clientContext, ServerContext serverContext, String command) throws IRCException {
             if (clientContext.getUser() == null) {
-                throw new LoginRequiredError();
+                throw new LoginRequiredException();
             }
             String[] params = command.split(" ");
             if (params.length == 2) {
@@ -306,7 +305,7 @@ public class IRCServer implements ServerContext {
         if (cmd != null) {
             cmd.run(clientContext, this, command);
         } else if (!command.trim().isEmpty()) {
-            throw new UnknownCommandError(command);
+            throw new UnknownCommandException(command);
         }
     }
     
