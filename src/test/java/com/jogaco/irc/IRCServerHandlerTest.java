@@ -205,6 +205,45 @@ public class IRCServerHandlerTest {
         assertThat(usersInChannel2.contains(user), is(true));
         assertThat(usersInChannel1.contains(user), is(false));
     }
+    
+    @Test
+    public void handleJoinChannelMaxClients() {
+        ServerContext serverContext = new IRCServer(1);
+        
+        User user = new User("user", "user");
+        IRCServerHandler handler = new IRCServerHandler(serverContext);
+        IRCServerHandler handlerMock = spy(handler);
+        when(handlerMock.getUser()).thenReturn(user);
+        EmbeddedChannel channel = new EmbeddedChannel(handlerMock);
+        channel.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+
+        Chat chat = serverContext.getOrCreateChat("channel");
+        Chat chatMock = spy(chat);
+        when(chatMock.maxClientsPerChannel()).thenReturn(2);
+        ServerContext serverContextMock = spy(serverContext);
+        when(serverContextMock.getOrCreateChat("channel")).thenReturn(chatMock);
+        
+        User user2 = new User("user2", "user2");
+        IRCServerHandler handler2 = new IRCServerHandler(serverContextMock);
+        IRCServerHandler handlerMock2 = spy(handler2);
+        when(handlerMock2.getUser()).thenReturn(user2);
+        EmbeddedChannel channel2 = new EmbeddedChannel(handlerMock2);
+        channel2.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+        
+        User user3 = new User("user3", "user3");
+        IRCServerHandler handler3 = new IRCServerHandler(serverContextMock);
+        IRCServerHandler handlerMock3 = spy(handler3);
+        when(handlerMock3.getUser()).thenReturn(user3);
+        EmbeddedChannel channel3 = new EmbeddedChannel(handlerMock3);
+        channel3.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+        
+        ByteBuf buf = channel3.readOutbound();
+        
+        String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
+
+        assertThat(response, is(ChannelMaxUsersException.TOO_MANY_USERS));
+    }
+
 
     @Test
     public void handleUsers() {

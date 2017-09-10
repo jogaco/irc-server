@@ -210,6 +210,10 @@ public class IRCServer implements ServerContext {
             clients = new LinkedHashSet<>(ServerContext.MAX_CLIENTS_PER_CHANNEL);
         }
 
+        int maxClientsPerChannel() {
+            return ServerContext.MAX_CLIENTS_PER_CHANNEL;
+        }
+
         void join(ClientContext client) throws ChannelMaxUsersException {
             User user = client.getUser();
 
@@ -217,7 +221,7 @@ public class IRCServer implements ServerContext {
                 if (users.contains(user)) {
                     return;
                 }
-                if (users.size() == ServerContext.MAX_CLIENTS_PER_CHANNEL) {
+                if (users.size() == maxClientsPerChannel()) {
                     throw new ChannelMaxUsersException();
                 }
                 users.add(user);

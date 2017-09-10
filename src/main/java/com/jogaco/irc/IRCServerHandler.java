@@ -54,7 +54,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         } catch (ErrorInCommandException | UserWrongPasswordException ex) {
             response = ex.getMessage();
         } catch (ChannelMaxUsersException ex) {
-            response = "Too many users";
+            response = ex.getMessage();
         } catch (IRCException ex) {
             Logger.getLogger(IRCServerHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
