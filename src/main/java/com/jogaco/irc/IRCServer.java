@@ -235,7 +235,7 @@ public class IRCServer implements ServerContext {
             client.setCurrentChannel(this);
         }
 
-        public List<UserMessage> getMessages() {
+        synchronized public List<UserMessage> getMessages() {
             return messages;
         }
 
@@ -259,9 +259,11 @@ public class IRCServer implements ServerContext {
                     messages.add(userMsg);
                 }
 
-                for (ClientContext otherClient : clients) {
-                    if (clientContext != otherClient) {
-                        otherClient.notify(userMsg);
+                synchronized (clients) {
+                    for (ClientContext otherClient : clients) {
+                        if (clientContext != otherClient) {
+                            otherClient.notify(userMsg);
+                        }
                     }
                 }
             }
