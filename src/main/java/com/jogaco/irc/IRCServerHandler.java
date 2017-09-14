@@ -13,8 +13,8 @@ import java.util.logging.Logger;
  * Handles a server-side channel. One instance per client connection
  */
 public class IRCServerHandler extends ChannelInboundHandlerAdapter implements ClientContext {
+    final private ServerContext serverContext;
     private User user;
-    private ServerContext serverContext;
     private String output;
     private IRCServer.Chat channel;
     private Channel netChannel;
@@ -38,7 +38,7 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf in = (ByteBuf) msg;
-        String command = in.toString(io.netty.util.CharsetUtil.US_ASCII);
+        String command = in.toString(io.netty.util.CharsetUtil.UTF_8);
         String response = null;
         try {
             serverContext.handleCommand(this, command);
@@ -100,5 +100,5 @@ public class IRCServerHandler extends ChannelInboundHandlerAdapter implements Cl
         ByteBuf buf = Unpooled.buffer();
         buf.writeBytes(msg.getFormattedMessage().getBytes());
         netChannel.writeAndFlush(buf);
-   }
+    }
 }
