@@ -10,6 +10,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -210,8 +211,8 @@ public class IRCServer implements ServerContext {
         Chat(String name) {
             this.name = name;
             users = new LinkedHashSet<>(ServerContext.MAX_CLIENTS_PER_CHANNEL);
-            messages = new LimitedSizeQueue<>(ServerContext.MAX_MESSAGES);
-            clients = new LinkedHashSet<>(ServerContext.MAX_CLIENTS_PER_CHANNEL);
+            messages =  Collections.synchronizedList(new LimitedSizeQueue<UserMessage>(ServerContext.MAX_MESSAGES));
+            clients = Collections.synchronizedSet(new LinkedHashSet<ClientContext>(ServerContext.MAX_CLIENTS_PER_CHANNEL));
         }
 
         int maxClientsPerChannel() {

@@ -8,6 +8,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -314,6 +315,7 @@ public class IRCServerHandlerTest {
         final List<User> users = chat.getUsers();
         assertThat(users, hasItems(user, user2));
     }
+
     @Test
     public void handleChannelMessage() {
         ServerContext serverContext = new IRCServer(1);
@@ -340,6 +342,48 @@ public class IRCServerHandlerTest {
         String response = buf.toString(io.netty.util.CharsetUtil.US_ASCII);
 
         assertThat(response, is(userMessage.getFormattedMessage()));
+    }
+
+   
+    class RunnableChat implements Runnable {
+       private Thread t;
+       final private ServerContext serverContext;
+
+       RunnableChat(ServerContext serverContext) {
+          this.serverContext = serverContext;
+       }
+
+       public void run() {
+           long id = Thread.currentThread().getId();
+            User user = new User("user" + id, "user");
+            IRCServerHandler handler = new IRCServerHandler(serverContext);
+            IRCServerHandler handlerMock = spy(handler);
+            when(handlerMock.getUser()).thenReturn(user);
+            EmbeddedChannel channel = new EmbeddedChannel(handlerMock);
+            channel.writeInbound(Unpooled.wrappedBuffer("/join channel".getBytes()));
+            ByteBuf buf = channel.readOutbound();
+            for (int j = 0; j < 10; ++j) {
+                UserMessage userMessage = new UserMessage(user, "message" + j);
+                channel.writeInbound(Unpooled.wrappedBuffer(userMessage.getMessage().getBytes()));
+                buf = channel.readOutbound();
+            }
+       }
+
+       public void start () {
+          long id = Thread.currentThread().getId();
+          if (t == null) {
+             t = new Thread (this, "name" + id);
+             t.start ();
+          }
+       }
+    }    
+    @Test
+    public void testConcurrency() throws InterruptedException, ExecutionException {
+        ServerContext serverContext = new IRCServer(1);
+        for (int j = 0; j < 10; ++j) {
+            RunnableChat r = new RunnableChat(serverContext);
+            r.start();
+        }
     }
 
 }
